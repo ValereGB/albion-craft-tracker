@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lymhurst Craft Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0f0e;--bg2:#131714;--bg3:#1a1f1c;--bg4:#222922;
+    --border:#2a342a;--border2:#3a4a3a;
+    --accent:#6dcc7a;--accent2:#4a9957;--adim:rgba(109,204,122,0.12);--aglow:rgba(109,204,122,0.25);
+    --gold:#e8b84b;--gdim:rgba(232,184,75,0.15);
+    --red:#e05c5c;--rdim:rgba(224,92,92,0.12);
+    --blue:#5aabcc;--bdim:rgba(90,171,204,0.12);
+    --text:#d4e0d4;--text2:#8aaa8a;--text3:#506050;
+    --fd:'Rajdhani',sans-serif;--fb:'IBM Plex Sans',sans-serif;--fm:'IBM Plex Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:0.22;pointer-events:none;z-index:0}
+  .wrap{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:0 24px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:26px 0;border-bottom:1px solid var(--border);margin-bottom:24px;flex-wrap:wrap;gap:14px}
+  .logo{display:flex;align-items:center;gap:14px}
+  .logo-icon{width:44px;height:44px;background:var(--adim);border:1px solid var(--accent2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px}
+  h1{font-family:var(--fd);font-size:24px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#fff}
+  h1 span{color:var(--accent)}
+  .sub{font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+  .hright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .spill{display:flex;align-items:center;gap:7px;font-family:var(--fm);font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 14px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0}
+  .dot.loading{background:var(--gold);animation:blink 1s ease-in-out infinite}
+  .dot.ok{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .dot.err{background:var(--red)}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .btn{font-family:var(--fd);font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--accent);background:var(--adim);border:1px solid var(--accent2);border-radius:6px;padding:7px 16px;cursor:pointer;transition:all .15s}
+  .btn:hover{background:var(--aglow);border-color:var(--accent)}
+  .btn:active{transform:scale(.97)}
+  .lbar{height:2px;background:var(--accent);width:0%;transition:width .3s;margin-bottom:18px;border-radius:1px;opacity:.7}
+  .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}
+  .metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
+  .metric::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--border2)}
+  .metric.hl::before{background:var(--accent)}
+  .metric.bl::before{background:var(--blue)}
+  .ml{font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px}
+  .mv{font-family:var(--fd);font-size:22px;font-weight:700;color:#fff;line-height:1;margin-bottom:3px}
+  .mv.gold{color:var(--gold)}.mv.green{color:var(--accent)}.mv.blue{color:var(--blue)}
+  .ms{font-size:11px;color:var(--text3);font-family:var(--fm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .params-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:20px}
+  .params-title{font-family:var(--fd);font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .params-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+  .param-block{display:flex;flex-direction:column;gap:8px}
+  .param-label{font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+  .param-row{display:flex;align-items:center;gap:10px}
+  .param-val{font-family:var(--fd);font-size:18px;font-weight:700;color:var(--accent);min-width:42px;text-align:right}
+  input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--border2);outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+  .toggle-row{display:flex;align-items:center;gap:10px}
+  .toggle{position:relative;width:42px;height:22px;cursor:pointer}
+  .toggle input{opacity:0;width:0;height:0}
+  .toggle-slider{position:absolute;inset:0;background:var(--bg4);border:1px solid var(--border2);border-radius:11px;transition:.2s}
+  .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--text3);border-radius:50%;transition:.2s}
+  .toggle input:checked+.toggle-slider{background:var(--adim);border-color:var(--accent2)}
+  .toggle input:checked+.toggle-slider::before{transform:translateX(20px);background:var(--accent)}
+  .toggle-label{font-family:var(--fb);font-size:13px;color:var(--text2)}
+  .toggle-label strong{color:var(--accent);font-weight:500}
+  .rrr-hint{font-family:var(--fm);font-size:11px;color:var(--text3);margin-top:4px}
+  .rrr-hint strong{color:var(--blue)}
+  .controls{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .cl{font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+  select{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--fb);font-size:13px;padding:7px 12px;cursor:pointer;outline:none;transition:border-color .15s}
+  select:hover,select:focus{border-color:var(--accent2)}
+  .etabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .etab{font-family:var(--fd);font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:5px 14px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s}
+  .etab:hover{color:var(--text2)}
+  .etab.active{background:var(--adim);border-color:var(--accent2);color:var(--accent)}
+  .tw{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  thead tr{background:var(--bg3);border-bottom:1px solid var(--border2)}
+  th{font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:11px 13px;text-align:left;font-weight:400;white-space:nowrap;cursor:pointer;user-select:none}
+  th:hover{color:var(--text2)}
+  td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,0.015)}
+  .iname{font-weight:500;color:var(--text);font-size:13px}
+  .ienc{font-family:var(--fm);font-size:10px;color:var(--text3);margin-top:2px;padding-left:28px}
+  .tb{display:inline-block;font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:4px;border:1px solid}
+  .t4{background:rgba(52,130,220,.1);border-color:#3482dc;color:#6aadee}
+  .t5{background:rgba(109,204,122,.1);border-color:#4a9957;color:var(--accent)}
+  .t6{background:rgba(232,184,75,.1);border-color:#c49830;color:var(--gold)}
+  .t7{background:rgba(192,100,220,.1);border-color:#9040b0;color:#c070e0}
+  .t8{background:rgba(224,92,92,.1);border-color:#a03030;color:#e07070}
+  .sell-cell{display:flex;flex-direction:column;gap:4px}
+  .sell-api-line{font-family:var(--fm);font-size:13px;font-weight:500;color:#fff}
+  .sell-api-none{font-family:var(--fm);font-size:11px;color:var(--text3)}
+  .sell-api-struck{font-family:var(--fm);font-size:11px;color:var(--text3);text-decoration:line-through}
+  .sell-manual-row{display:flex;align-items:center;gap:5px}
+  .sell-input{background:var(--bg4);border:1px dashed var(--border2);border-radius:4px;color:var(--text2);font-family:var(--fm);font-size:11px;padding:3px 7px;width:80px;outline:none;transition:all .15s}
+  .sell-input:focus{border-color:var(--accent2);border-style:solid;color:var(--text)}
+  .sell-input.has-val{border-color:var(--gold);border-style:solid;color:var(--gold)}
+  .sell-input::placeholder{color:var(--text3);font-size:10px}
+  .mat-input{background:var(--bg4);border:1px dashed var(--border2);border-radius:4px;color:var(--text2);font-family:var(--fm);font-size:11px;padding:3px 7px;width:72px;outline:none;text-align:center;transition:all .15s}
+  .mat-input:focus{border-color:var(--accent2);border-style:solid;color:var(--text)}
+  .mat-input::placeholder{color:var(--text3);font-size:11px;text-align:center}
+  .manual-tag{font-family:var(--fm);font-size:9px;color:var(--gold);background:rgba(232,184,75,.12);border:1px solid rgba(232,184,75,.3);border-radius:3px;padding:1px 4px;letter-spacing:.5px;text-transform:uppercase}
+  .pc{font-family:var(--fm);font-size:13px;font-weight:500}
+  .pg{color:var(--text2)}
+  .pna{font-family:var(--fm);font-size:11px;color:var(--text3)}
+  .pp{font-family:var(--fm);font-size:13px;font-weight:500;color:var(--accent)}
+  .pn{font-family:var(--fm);font-size:13px;color:var(--red)}
+  .mb{display:inline-block;font-family:var(--fm);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:5px}
+  .mpos{background:var(--adim);color:var(--accent)}
+  .mneg{background:var(--rdim);color:var(--red)}
+  .rc{font-family:var(--fm);font-size:11px;color:var(--accent2)}
+  .ii{display:inline-block;width:22px;height:22px;border-radius:4px;background:var(--bg4);border:1px solid var(--border2);margin-right:7px;vertical-align:middle;font-size:12px;line-height:22px;text-align:center}
+  .empty td{text-align:center;padding:48px;color:var(--text3);font-family:var(--fm);font-size:12px;letter-spacing:1px}
+  .notice{margin-top:14px;display:flex;align-items:flex-start;gap:10px;background:var(--gdim);border:1px solid rgba(232,184,75,.2);border-radius:8px;padding:12px 16px;font-size:12px;color:#a88030;line-height:1.6}
+  .notice strong{color:var(--gold)}
+  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:var(--fm);font-size:10px;color:var(--text3)}
+  footer a{color:var(--accent2);text-decoration:none}
+  footer a:hover{color:var(--accent)}
+  @media(max-width:800px){.metrics{grid-template-columns:repeat(2,1fr)}.params-grid{grid-template-columns:1fr}h1{font-size:20px}td,th{padding:7px 9px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌿</div>
+    <div>
+      <h1>Lym<span>hurst</span> Craft</h1>
+      <div class="sub">Capuches &amp; Bottes en cuir · Prix live AODP · Europe</div>
+    </div>
+  </div>
+  <div class="hright">
+    <div class="spill"><div class="dot loading" id="dot"></div><span id="stxt">Initialisation...</span></div>
+    <button class="btn" onclick="loadAll()">↻ Actualiser</button>
+  </div>
+</header>
+
+<div class="lbar" id="lbar"></div>
+
+<div class="metrics">
+  <div class="metric hl">
+    <div class="ml">Meilleure marge</div>
+    <div class="mv gold" id="m-best">—</div>
+    <div class="ms" id="m-best-name">en attente</div>
+  </div>
+  <div class="metric">
+    <div class="ml">Marge moyenne</div>
+    <div class="mv green" id="m-avg">—</div>
+    <div class="ms">items avec données</div>
+  </div>
+  <div class="metric">
+    <div class="ml">Items rentables</div>
+    <div class="mv" id="m-count">—</div>
+    <div class="ms">marge &gt; 0</div>
+  </div>
+  <div class="metric bl">
+    <div class="ml">RRR effectif</div>
+    <div class="mv blue" id="m-rrr">—</div>
+    <div class="ms" id="m-rrr-sub">selon paramètres</div>
+  </div>
+</div>
+
+<div class="params-section">
+  <div class="params-title"><span>⚙️</span> Paramètres de craft</div>
+  <div class="params-grid">
+    <div class="param-block">
+      <div class="param-label">Niveau de maîtrise</div>
+      <div class="param-row">
+        <input type="range" id="mastery" min="0" max="100" value="0" step="1" oninput="updateParams()">
+        <div class="param-val" id="mastery-val">0</div>
+      </div>
+      <div class="rrr-hint">Chaque niveau = <strong>+0.116%</strong> bonus production</div>
+    </div>
+    <div class="param-block">
+      <div class="param-label">Premium</div>
+      <div class="toggle-row" style="margin-top:4px">
+        <label class="toggle"><input type="checkbox" id="premium" onchange="updateParams()"><span class="toggle-slider"></span></label>
+        <span class="toggle-label" id="lbl-premium">Désactivé</span>
+      </div>
+      <div class="rrr-hint">Requis pour utiliser le Focus</div>
+    </div>
+    <div class="param-block">
+      <div class="param-label">Focus</div>
+      <div class="toggle-row" style="margin-top:4px">
+        <label class="toggle"><input type="checkbox" id="focus" onchange="updateParams()"><span class="toggle-slider"></span></label>
+        <span class="toggle-label" id="lbl-focus">Désactivé</span>
+      </div>
+      <div class="rrr-hint" id="focus-hint">Nécessite premium</div>
+    </div>
+  </div>
+</div>
+
+<div class="params-section" style="margin-bottom:20px">
+  <div class="params-title"><span>🧵</span> Prix du Cuir raffiné (Leather) — saisis ici les prix in-game</div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr>
+          <th style="font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:left;background:var(--bg3);border-bottom:1px solid var(--border2)">Enchantement</th>
+          <th style="font-family:var(--fm);font-size:10px;color:#6aadee;letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:center;background:var(--bg3);border-bottom:1px solid var(--border2)">T4</th>
+          <th style="font-family:var(--fm);font-size:10px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:center;background:var(--bg3);border-bottom:1px solid var(--border2)">T5</th>
+          <th style="font-family:var(--fm);font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:center;background:var(--bg3);border-bottom:1px solid var(--border2)">T6</th>
+          <th style="font-family:var(--fm);font-size:10px;color:#c070e0;letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:center;background:var(--bg3);border-bottom:1px solid var(--border2)">T7</th>
+          <th style="font-family:var(--fm);font-size:10px;color:#e07070;letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:center;background:var(--bg3);border-bottom:1px solid var(--border2)">T8</th>
+        </tr>
+      </thead>
+      <tbody id="mat-inputs-body"></tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px;font-family:var(--fm);font-size:10px;color:var(--text3)">
+    Les cases vertes = prix chargé depuis l'API · Les cases vides = pas de données, saisis le prix in-game · Formats acceptés : <strong style="color:var(--text2)">1200</strong>, <strong style="color:var(--text2)">1.2k</strong>, <strong style="color:var(--text2)">1.2M</strong>
+  </div>
+</div>
+
+<div class="controls">
+  <span class="cl">Type</span>
+  <select id="f-type" onchange="render()">
+    <option value="all">Capuche + Bottes</option>
+    <option value="hood">Capuche uniquement</option>
+    <option value="shoes">Bottes uniquement</option>
+  </select>
+  <span class="cl">Tier</span>
+  <select id="f-tier" onchange="render()">
+    <option value="all">Tous les tiers</option>
+    <option value="T4">T4</option><option value="T5">T5</option>
+    <option value="T6">T6</option><option value="T7">T7</option><option value="T8">T8</option>
+  </select>
+  <span class="cl">Tri</span>
+  <select id="f-sort" onchange="render()">
+    <option value="profit">Marge (meilleure d'abord)</option>
+    <option value="sell">Prix de vente ↓</option>
+    <option value="margin">% Marge ↓</option>
+    <option value="tier">Tier croissant</option>
+  </select>
+</div>
+
+<div class="etabs">
+  <button class="etab active" onclick="setEnc('all',this)">Tout</button>
+  <button class="etab" onclick="setEnc('',this)">.0 Normal</button>
+  <button class="etab" onclick="setEnc('@1',this)">.1 Enchanté</button>
+  <button class="etab" onclick="setEnc('@2',this)">.2 Rare</button>
+  <button class="etab" onclick="setEnc('@3',this)">.3 Exceptionnel</button>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+  <span style="font-family:var(--fm);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase">Quantité craftée</span>
+  <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px">
+    <button onclick="setQty(Math.max(1,qty-1))" style="background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;line-height:1;padding:0 2px">−</button>
+    <input id="qty-input" type="number" min="1" max="9999" value="1"
+      style="background:none;border:none;color:var(--accent);font-family:var(--fd);font-size:18px;font-weight:700;width:52px;text-align:center;outline:none"
+      oninput="setQty(parseInt(this.value)||1)">
+    <button onclick="setQty(qty+1)" style="background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;line-height:1;padding:0 2px">+</button>
+  </div>
+  <div style="display:flex;gap:6px">
+    <button onclick="setQty(10)"  style="font-family:var(--fm);font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">×10</button>
+    <button onclick="setQty(50)"  style="font-family:var(--fm);font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">×50</button>
+    <button onclick="setQty(100)" style="font-family:var(--fm);font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">×100</button>
+    <button onclick="setQty(500)" style="font-family:var(--fm);font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">×500</button>
+  </div>
+  <span id="qty-total-label" style="font-family:var(--fm);font-size:11px;color:var(--text3)"></span>
+</div>
+
+<div class="tw">
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Tier</th>
+        <th>Prix de vente <small style="opacity:.5;font-weight:400">(modifiable)</small></th>
+        <th>Coût matériaux</th>
+        <th id="th-profit">Marge nette</th>
+        <th>Économie RRR</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"><tr class="empty"><td colspan="6">Chargement des prix...</td></tr></tbody>
+  </table>
+</div>
+
+<div class="notice">
+  ℹ️&nbsp;
+  <span>
+    <strong>Prix manquants ?</strong> Tape le prix dans le champ gris — formats : <strong>23970</strong>, <strong>23.9k</strong>, <strong>1.2M</strong>. La marge se recalcule instantanément sans perdre le curseur.
+    Aucun fallback : si un prix de matériau est absent de l'API, la marge affiche <strong>—</strong>.
+  </span>
+</div>
+
+<footer>
+  <span>Données : <a href="https://www.albion-online-data.com/" target="_blank">Albion Online Data Project</a> · Europe · Lymhurst</span>
+  <span>Noms officiels FR · 8× leather même tier/enchant · Taxe 2.5% · RRR dynamique</span>
+</footer>
+</div>
+
+<script>
+const API = 'https://europe.albion-online-data.com/api/v2/stats/prices';
+
+const ITEMS = [
+  {id:'T4_HEAD_LEATHER_SET1',  name:'Capuche de mercenaire',  type:'hood',  tier:'T4', mat:'T4_LEATHER'},
+  {id:'T5_HEAD_LEATHER_SET1',  name:'Capuche de mercenaire',  type:'hood',  tier:'T5', mat:'T5_LEATHER'},
+  {id:'T6_HEAD_LEATHER_SET1',  name:'Capuche de mercenaire',  type:'hood',  tier:'T6', mat:'T6_LEATHER'},
+  {id:'T7_HEAD_LEATHER_SET1',  name:'Capuche de mercenaire',  type:'hood',  tier:'T7', mat:'T7_LEATHER'},
+  {id:'T8_HEAD_LEATHER_SET1',  name:'Capuche de mercenaire',  type:'hood',  tier:'T8', mat:'T8_LEATHER'},
+  {id:'T4_HEAD_LEATHER_SET2',  name:'Capuche de chasseur',    type:'hood',  tier:'T4', mat:'T4_LEATHER'},
+  {id:'T5_HEAD_LEATHER_SET2',  name:'Capuche de chasseur',    type:'hood',  tier:'T5', mat:'T5_LEATHER'},
+  {id:'T6_HEAD_LEATHER_SET2',  name:'Capuche de chasseur',    type:'hood',  tier:'T6', mat:'T6_LEATHER'},
+  {id:'T7_HEAD_LEATHER_SET2',  name:'Capuche de chasseur',    type:'hood',  tier:'T7', mat:'T7_LEATHER'},
+  {id:'T8_HEAD_LEATHER_SET2',  name:'Capuche de chasseur',    type:'hood',  tier:'T8', mat:'T8_LEATHER'},
+  {id:'T4_HEAD_LEATHER_SET3',  name:"Capuche d'assassin",     type:'hood',  tier:'T4', mat:'T4_LEATHER'},
+  {id:'T5_HEAD_LEATHER_SET3',  name:"Capuche d'assassin",     type:'hood',  tier:'T5', mat:'T5_LEATHER'},
+  {id:'T6_HEAD_LEATHER_SET3',  name:"Capuche d'assassin",     type:'hood',  tier:'T6', mat:'T6_LEATHER'},
+  {id:'T7_HEAD_LEATHER_SET3',  name:"Capuche d'assassin",     type:'hood',  tier:'T7', mat:'T7_LEATHER'},
+  {id:'T8_HEAD_LEATHER_SET3',  name:"Capuche d'assassin",     type:'hood',  tier:'T8', mat:'T8_LEATHER'},
+  {id:'T4_SHOES_LEATHER_SET1', name:'Chaussures de mercenaire', type:'shoes', tier:'T4', mat:'T4_LEATHER'},
+  {id:'T5_SHOES_LEATHER_SET1', name:'Chaussures de mercenaire', type:'shoes', tier:'T5', mat:'T5_LEATHER'},
+  {id:'T6_SHOES_LEATHER_SET1', name:'Chaussures de mercenaire', type:'shoes', tier:'T6', mat:'T6_LEATHER'},
+  {id:'T7_SHOES_LEATHER_SET1', name:'Chaussures de mercenaire', type:'shoes', tier:'T7', mat:'T7_LEATHER'},
+  {id:'T8_SHOES_LEATHER_SET1', name:'Chaussures de mercenaire', type:'shoes', tier:'T8', mat:'T8_LEATHER'},
+  {id:'T4_SHOES_LEATHER_SET2', name:'Chaussures de chasseur',   type:'shoes', tier:'T4', mat:'T4_LEATHER'},
+  {id:'T5_SHOES_LEATHER_SET2', name:'Chaussures de chasseur',   type:'shoes', tier:'T5', mat:'T5_LEATHER'},
+  {id:'T6_SHOES_LEATHER_SET2', name:'Chaussures de chasseur',   type:'shoes', tier:'T6', mat:'T6_LEATHER'},
+  {id:'T7_SHOES_LEATHER_SET2', name:'Chaussures de chasseur',   type:'shoes', tier:'T7', mat:'T7_LEATHER'},
+  {id:'T8_SHOES_LEATHER_SET2', name:'Chaussures de chasseur',   type:'shoes', tier:'T8', mat:'T8_LEATHER'},
+  {id:'T4_SHOES_LEATHER_SET3', name:"Chaussures d'assassin",  type:'shoes', tier:'T4', mat:'T4_LEATHER'},
+  {id:'T5_SHOES_LEATHER_SET3', name:"Chaussures d'assassin",  type:'shoes', tier:'T5', mat:'T5_LEATHER'},
+  {id:'T6_SHOES_LEATHER_SET3', name:"Chaussures d'assassin",  type:'shoes', tier:'T6', mat:'T6_LEATHER'},
+  {id:'T7_SHOES_LEATHER_SET3', name:"Chaussures d'assassin",  type:'shoes', tier:'T7', mat:'T7_LEATHER'},
+  {id:'T8_SHOES_LEATHER_SET3', name:"Chaussures d'assassin",  type:'shoes', tier:'T8', mat:'T8_LEATHER'},
+];
+
+const MAT_QTY   = 8; // toujours 8 pour casques et chaussures
+const ENC_LABEL = {'':'Normal','@1':'Enchanté','@2':'Rare','@3':'Exceptionnel'};
+const ENC_DOT   = {'':'.0','@1':'.1','@2':'.2','@3':'.3'};
+const ENCS      = ['','@1','@2','@3'];
+const TAX       = 0.025;
+
+// RRR : Lymhurst cuir = +40% spé + +18% base = 58% bonus production
+// Formule officielle : RRR = 1 - 1/(1 + totalBonus)
+function calcRRR(mastery, premium, focus) {
+  const base     = 0.40 + 0.18;
+  const masteryB = (mastery / 100) * 0.116;
+  const focusB   = (focus && premium) ? 0.59 : 0;
+  return 1 - 1 / (1 + base + masteryB + focusB);
+}
+
+// ── STATE ────────────────────────────────────────────────────────
+let allRows    = [];
+let encFilter  = 'all';
+let currentRRR = calcRRR(0, false, false);
+const manual   = {}; // { fullId: number } — overrides prix de vente
+let apiMatMap  = {}; // { 'T5_LEATHER@1': 1200, ... } — prix API matériaux
+let qty        = 1;  // multiplicateur de quantité craftée
+
+function setQty(n) {
+  qty = Math.max(1, Math.min(9999, isNaN(n) ? 1 : n));
+  const input = document.getElementById('qty-input');
+  if (input) input.value = qty;
+  const label = document.getElementById('qty-total-label');
+  if (label) label.textContent = qty > 1 ? `→ totaux pour ${qty} crafts` : '';
+  const th = document.getElementById('th-profit');
+  if (th) th.innerHTML = qty > 1
+    ? `Marge nette <small style="opacity:.5;font-weight:400">(×${qty})</small>`
+    : 'Marge nette';
+  if (allRows.length > 0) { updateAllCells(); updateMetrics(); }
+}
+
+// ── UTILS ────────────────────────────────────────────────────────
+function fmt(n) {
+  if (!n || n <= 0) return null;
+  if (n >= 1000000) return (n/1000000).toFixed(2)+'M';
+  if (n >= 1000)    return Math.round(n/1000)+'k';
+  return Math.round(n)+'';
+}
+
+function parseManual(str) {
+  if (!str || !str.trim()) return null;
+  const s = str.trim().toLowerCase().replace(/[\s\u00a0]/g,'').replace(',','.');
+  let n;
+  if      (s.endsWith('m')) n = parseFloat(s) * 1000000;
+  else if (s.endsWith('k')) n = parseFloat(s) * 1000;
+  else                      n = parseFloat(s);
+  return isNaN(n) || n <= 0 ? null : Math.round(n);
+}
+
+function effectiveSell(r) {
+  return manual[r.fullId] || r.apiSell || 0;
+}
+
+function recompute(r) {
+  const sell    = effectiveSell(r);
+  const rawCost = r.matPrice > 0 ? r.matPrice * MAT_QTY : 0;
+  r.matCost = rawCost > 0 ? Math.round(rawCost * (1 - currentRRR)) : 0;
+  r.rrrSave = rawCost > 0 ? Math.round(rawCost * currentRRR) : 0;
+  const net = sell > 0 ? sell * (1 - TAX) : 0;
+  r.profit  = (sell > 0 && r.matCost > 0) ? Math.round(net - r.matCost) : null;
+  r.margin  = (r.profit !== null && r.matCost > 0) ? Math.round(r.profit / r.matCost * 100) : null;
+}
+
+// ── PRIX MATÉRIAUX MANUELS ───────────────────────────────────────
+// manualMat[key] = prix saisi manuellement ex: "T5_LEATHER@1" -> 1200
+const manualMat = {};
+
+const MAT_TIERS = ['T4','T5','T6','T7','T8'];
+const MAT_ENCS  = ['', '@1', '@2', '@3'];
+const MAT_ENC_LABELS = {'':'.0 Normal', '@1':'.1 Enchanté', '@2':'.2 Rare', '@3':'.3 Exceptionnel'};
+
+function matKey(tier, enc) {
+  if (enc === '')   return tier + '_LEATHER';
+  if (enc === '@1') return tier + '_LEATHER_LEVEL1@1';
+  if (enc === '@2') return tier + '_LEATHER_LEVEL2@2';
+  if (enc === '@3') return tier + '_LEATHER_LEVEL3@3';
+  return tier + '_LEATHER';
+}
+
+function getMatPrice(tier, enc) {
+  const key = matKey(tier, enc);
+  return manualMat[key] || apiMatMap[key] || 0;
+}
+
+// Construit le tableau des inputs matériaux
+function buildMatInputsTable() {
+  const tbody = document.getElementById('mat-inputs-body');
+  if (!tbody) return;
+  tbody.innerHTML = MAT_ENCS.map(enc => {
+    const tds = MAT_TIERS.map(tier => {
+      const key   = matKey(tier, enc);
+      const api   = apiMatMap[key] || 0;
+      const man   = manualMat[key] || 0;
+      const val   = man || api || '';
+      const isApi = !man && api > 0;
+      const style = isApi
+        ? 'background:rgba(109,204,122,0.08);border-color:var(--accent2);color:var(--accent)'
+        : man ? 'border-color:var(--gold);border-style:solid;color:var(--gold)' : '';
+      return `<td style="padding:5px 8px;text-align:center;border-bottom:1px solid var(--border)">
+        <input
+          id="mi_${key.replace(/@/g,'_')}"
+          class="mat-input"
+          type="text"
+          value="${val ? fmtRaw(val) : ''}"
+          placeholder="—"
+          style="${style}"
+          oninput="onMatInput('${key}', this)"
+          title="${key}">
+      </td>`;
+    }).join('');
+    return `<tr>
+      <td style="padding:5px 10px;font-family:var(--fm);font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap">${MAT_ENC_LABELS[enc]}</td>
+      ${tds}
+    </tr>`;
+  }).join('');
+}
+
+// Formate un nombre brut en string lisible pour les inputs
+function fmtRaw(n) {
+  if (!n || n <= 0) return '';
+  if (n >= 1000000) return (n/1000000).toFixed(2)+'M';
+  if (n >= 1000)    return (n/1000).toFixed(1).replace('.0','')+'k';
+  return String(Math.round(n));
+}
+
+function onMatInput(key, inputEl) {
+  const parsed = parseManual(inputEl.value);
+  if (parsed) {
+    manualMat[key] = parsed;
+    inputEl.style.borderColor = 'var(--gold)';
+    inputEl.style.borderStyle = 'solid';
+    inputEl.style.color = 'var(--gold)';
+  } else {
+    delete manualMat[key];
+    const api = apiMatMap[key] || 0;
+    if (api > 0) {
+      inputEl.style.background = 'rgba(109,204,122,0.08)';
+      inputEl.style.borderColor = 'var(--accent2)';
+      inputEl.style.color = 'var(--accent)';
+    } else {
+      inputEl.style.borderColor = '';
+      inputEl.style.borderStyle = '';
+      inputEl.style.color = '';
+    }
+  }
+  // Recalculer toutes les lignes qui utilisent ce matériau
+  for (const r of allRows) {
+    const rKey = r.tier + '_LEATHER' + r.enc;
+    if (rKey === key) {
+      r.matPrice = getMatPrice(r.tier, r.enc); // priorité manualMat > apiMatMap
+      recompute(r);
+      const sid = r.fullId.replace(/@/g,'_');
+      const matEl = document.getElementById('mat_'+sid);
+      const pEl   = document.getElementById('pro_'+sid);
+      const rEl   = document.getElementById('rrr_'+sid);
+      if (matEl) matEl.innerHTML = matCellHTML(r);
+      if (pEl)   pEl.innerHTML   = profitCellHTML(r);
+      if (rEl)   rEl.innerHTML   = rrrCellHTML(r);
+    }
+  }
+  updateMetrics();
+}
+
+// Met à jour les couleurs des inputs mat après chargement API
+function refreshMatInputColors() {
+  for (const tier of MAT_TIERS) {
+    for (const enc of MAT_ENCS) {
+      const key = matKey(tier, enc);
+      const inputEl = document.getElementById('mi_'+key.replace(/@/g,'_'));
+      if (!inputEl) continue;
+      const api = apiMatMap[key] || 0;
+      const man = manualMat[key] || 0;
+      if (man) {
+        inputEl.style.borderColor = 'var(--gold)';
+        inputEl.style.borderStyle = 'solid';
+        inputEl.style.color = 'var(--gold)';
+      } else if (api > 0) {
+        inputEl.value = fmtRaw(api);
+        inputEl.style.background = 'rgba(109,204,122,0.08)';
+        inputEl.style.borderColor = 'var(--accent2)';
+        inputEl.style.color = 'var(--accent)';
+      }
+    }
+  }
+}
+
+
+function setStatus(s, t) {
+  document.getElementById('dot').className = 'dot ' + s;
+  document.getElementById('stxt').textContent = t;
+}
+function setBar(p) { document.getElementById('lbar').style.width = p + '%'; }
+
+// ── PARAMS ───────────────────────────────────────────────────────
+function updateParams() {
+  const mastery = +document.getElementById('mastery').value;
+  const premium =  document.getElementById('premium').checked;
+  const focus   =  document.getElementById('focus').checked;
+  document.getElementById('mastery-val').textContent = mastery;
+  document.getElementById('lbl-premium').innerHTML = premium ? '<strong>Actif</strong>' : 'Désactivé';
+  const fok = focus && premium;
+  document.getElementById('lbl-focus').innerHTML  = fok ? '<strong>Actif</strong>' : focus ? 'Nécessite premium' : 'Désactivé';
+  document.getElementById('focus-hint').innerHTML = fok ? '<strong>+59%</strong> bonus production' : focus ? 'Nécessite premium' : 'Désactivé';
+  currentRRR = calcRRR(mastery, premium, focus);
+  document.getElementById('m-rrr').textContent = (currentRRR*100).toFixed(1)+'%';
+  let sub = 'Base ville';
+  if (mastery > 0) sub += ` + maîtrise ${mastery}`;
+  if (fok) sub += ' + focus';
+  document.getElementById('m-rrr-sub').textContent = sub;
+  if (allRows.length > 0) {
+    allRows.forEach(r => { r.matPrice = getMatPrice(r.tier, r.enc); recompute(r); });
+    updateAllCells(); updateMetrics();
+  }
+}
+
+// ── CHAMP PRIX MANUEL ────────────────────────────────────────────
+// Appelé à chaque frappe — NE recrée PAS le tableau, met à jour seulement les cellules concernées
+function onManual(fullId, val, inputEl) {
+  const parsed = parseManual(val);
+  if (parsed) {
+    manual[fullId] = parsed;
+    inputEl.classList.add('has-val');
+  } else {
+    delete manual[fullId];
+    inputEl.classList.remove('has-val');
+  }
+  const r = allRows.find(x => x.fullId === fullId);
+  if (!r) return;
+  recompute(r);
+  // Mettre à jour uniquement les 4 cellules dynamiques de cette ligne
+  const sid = fullId.replace(/@/g,'_');
+  const el = (id) => document.getElementById(id);
+  const apiEl = el('api_'+sid);
+  const matEl = el('mat_'+sid);
+  const pEl   = el('pro_'+sid);
+  const rEl   = el('rrr_'+sid);
+  const tagEl = el('tag_'+sid);
+  if (apiEl) apiEl.innerHTML = apiLineHTML(r);
+  if (matEl) matEl.innerHTML = matCellHTML(r);
+  if (pEl)   pEl.innerHTML   = profitCellHTML(r);
+  if (rEl)   rEl.innerHTML   = rrrCellHTML(r);
+  if (tagEl) tagEl.style.display = manual[fullId] ? 'inline' : 'none';
+  updateMetrics();
+}
+
+// ── CELL HTML HELPERS ────────────────────────────────────────────
+function apiLineHTML(r) {
+  const has = !!manual[r.fullId];
+  if (r.apiSell > 0 && !has) return `<span class="sell-api-line">${fmt(r.apiSell)} <small style="color:var(--text3)">s</small></span>`;
+  if (r.apiSell > 0 &&  has) return `<span class="sell-api-struck">${fmt(r.apiSell)} s (API)</span>`;
+  return `<span class="sell-api-none">— pas de prix API</span>`;
+}
+
+function matCellHTML(r) {
+  if (!r.matCost) return `<span class="pna">—</span>`;
+  const rawCost = r.matPrice * MAT_QTY;
+  const total = r.matCost * qty;
+  const suffix = qty > 1 ? ` <small style="color:var(--accent2)">(${fmt(total)} s total)</small>` : '';
+  return `<span class="pc pg">${fmt(r.matCost)} s${suffix}<br><small style="font-family:var(--fm);font-size:9px;color:var(--text3)">${MAT_QTY}× ${fmt(r.matPrice)||'?'}s = ${fmt(rawCost)}s · -RRR ${(currentRRR*100).toFixed(0)}%</small></span>`;
+}
+
+function profitCellHTML(r) {
+  if (r.profit === null) return `<span class="pna">—</span>`;
+  const total = r.profit * qty;
+  const suffix = qty > 1 ? ` <small style="color:var(--accent2)">(${fmt(total)} s total)</small>` : '';
+  if (r.profit > 0) return `<span class="pp">${fmt(r.profit)} s<span class="mb mpos">+${r.margin}%</span>${suffix}</span>`;
+  return `<span class="pn">-${fmt(Math.abs(r.profit))||'0'} s<span class="mb mneg">${r.margin}%</span>${suffix}</span>`;
+}
+
+function rrrCellHTML(r) {
+  if (!r.rrrSave) return `<span class="pna">—</span>`;
+  const total = r.rrrSave * qty;
+  const suffix = qty > 1 ? ` <small style="color:var(--accent2)">(${fmt(total)} s)</small>` : '';
+  return `<span class="rc">~${fmt(r.rrrSave)} s${suffix}</span>`;
+}
+
+// Met à jour toutes les cellules dynamiques sans toucher aux inputs
+function updateAllCells() {
+  for (const r of allRows) {
+    const sid = r.fullId.replace(/@/g,'_');
+    const matEl = document.getElementById('mat_'+sid);
+    const pEl   = document.getElementById('pro_'+sid);
+    const rEl   = document.getElementById('rrr_'+sid);
+    if (matEl) matEl.innerHTML = matCellHTML(r);
+    if (pEl)   pEl.innerHTML   = profitCellHTML(r);
+    if (rEl)   rEl.innerHTML   = rrrCellHTML(r);
+  }
+}
+
+// ── API FETCH ────────────────────────────────────────────────────
+async function apiFetch(ids) {
+  const url = `${API}/${ids.join(',')}.json?locations=Lymhurst`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return {};
+    const d = await r.json();
+    const m = {};
+    for (const x of d) {
+      // Prendre sell_price_min si > 0, sinon buy_price_max
+      const price = x.sell_price_min > 0 ? x.sell_price_min : 0;
+      if (price > 0) m[x.item_id] = price;
+    }
+    return m;
+  } catch(e) {
+    console.error('apiFetch error:', e, url);
+    return {};
+  }
+}
+
+async function loadAll() {
+  setStatus('loading','Chargement des matériaux...'); setBar(5);
+  allRows = [];
+
+  // Leather prices — T4 à T8, tous enchantements
+  const matIds = [];
+  for (const t of ['T4','T5','T6','T7','T8']) {
+    matIds.push(t+'_LEATHER');
+    matIds.push(t+'_LEATHER_LEVEL1@1');
+    matIds.push(t+'_LEATHER_LEVEL2@2');
+    matIds.push(t+'_LEATHER_LEVEL3@3');
+  }
+  const matMap = await apiFetch(matIds);
+  apiMatMap = matMap; // stocker pour les inputs
+  buildMatInputsTable(); // construire le tableau des inputs matériaux
+  setBar(20); setStatus('loading','Chargement des prix de vente...');
+
+  // Item sell prices
+  const itemIds = [];
+  for (const item of ITEMS) for (const enc of ENCS) itemIds.push(item.id+enc);
+  const sellMap = {};
+  const CHUNK = 15; // réduit pour respecter la limite URL de 4096 caractères
+  for (let i = 0; i < itemIds.length; i += CHUNK) {
+    Object.assign(sellMap, await apiFetch(itemIds.slice(i, i+CHUNK)));
+    const pct = 20 + Math.round((i+CHUNK) / itemIds.length * 70);
+    setBar(Math.min(pct, 90));
+    setStatus('loading', `Chargement... ${Math.min(pct,90)}%`);
+  }
+  setBar(95);
+
+  // Construire les lignes
+  for (const item of ITEMS) {
+    for (const enc of ENCS) {
+      const fullId   = item.id + enc;
+      const apiSell  = sellMap[fullId] || 0;
+      const matKey_r = item.mat + enc;
+      const matPrice = getMatPrice(item.tier, enc); // utilise matKey() qui génère le bon ID
+      const row = {
+        fullId, name: item.name, type: item.type,
+        tier: item.tier, tierNum: parseInt(item.tier.replace('T','')),
+        enc, encDot: ENC_DOT[enc], encLabel: ENC_LABEL[enc],
+        apiSell, matPrice,
+        matCost: 0, rrrSave: 0, profit: null, margin: null
+      };
+      recompute(row);
+      allRows.push(row);
+    }
+  }
+
+  const sc = Object.keys(sellMap).length;
+  const mc = Object.keys(matMap).length;
+  const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  setBar(100); setTimeout(() => setBar(0), 1000);
+  setStatus(sc > 0 ? 'ok' : 'err', sc > 0 ? `${sc} prix · ${mc} mats · ${now}` : 'Aucun prix — vérifiez la connexion');
+  refreshMatInputColors(); // mettre à jour les couleurs des inputs mat
+  render();
+  updateMetrics();
+}
+
+// ── FILTER & SORT ────────────────────────────────────────────────
+function getFiltered() {
+  const ft  = document.getElementById('f-type').value;
+  const ftr = document.getElementById('f-tier').value;
+  return allRows.filter(r => {
+    if (ft  !== 'all' && r.type !== ft)  return false;
+    if (ftr !== 'all' && r.tier !== ftr) return false;
+    if (encFilter !== 'all' && r.enc !== encFilter) return false;
+    return true;
+  });
+}
+
+// ── RENDER ───────────────────────────────────────────────────────
+function render() {
+  const rows = getFiltered();
+  const sk   = document.getElementById('f-sort').value;
+  rows.sort((a,b) => {
+    if (sk === 'profit') return (b.profit  ?? -Infinity) - (a.profit  ?? -Infinity);
+    if (sk === 'sell')   return effectiveSell(b) - effectiveSell(a);
+    if (sk === 'margin') return (b.margin  ?? -Infinity) - (a.margin  ?? -Infinity);
+    if (sk === 'tier')   return a.tierNum - b.tierNum || a.name.localeCompare(b.name);
+    return 0;
+  });
+
+  const tbody = document.getElementById('tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr class="empty"><td colspan="6">Aucun résultat</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const icon    = r.type === 'hood' ? '🪖' : '👟';
+    const tc      = r.tier.toLowerCase();
+    const sid     = r.fullId.replace(/@/g,'_');
+    const hasMan  = !!manual[r.fullId];
+    const inputCls = hasMan ? 'sell-input has-val' : 'sell-input';
+    const inputVal = hasMan ? manual[r.fullId] : '';
+
+    return `<tr>
+      <td>
+        <span class="ii">${icon}</span>
+        <span class="iname">${r.name}</span>
+        <div class="ienc">${r.encDot} ${r.encLabel}</div>
+      </td>
+      <td><span class="tb ${tc}">${r.tier}</span></td>
+      <td>
+        <div class="sell-cell">
+          <span id="api_${sid}">${apiLineHTML(r)}</span>
+          <div class="sell-manual-row">
+            <input
+              class="${inputCls}"
+              type="text"
+              placeholder="ex: 23.9k"
+              value="${inputVal}"
+              oninput="onManual('${r.fullId}', this.value, this)"
+              title="Prix manuel prioritaire sur l'API">
+            <span id="tag_${sid}" class="manual-tag" style="display:${hasMan?'inline':'none'}">manuel</span>
+          </div>
+        </div>
+      </td>
+      <td id="mat_${sid}">${matCellHTML(r)}</td>
+      <td id="pro_${sid}">${profitCellHTML(r)}</td>
+      <td id="rrr_${sid}">${rrrCellHTML(r)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── METRICS ──────────────────────────────────────────────────────
+function updateMetrics() {
+  const rows       = getFiltered().filter(r => r.profit !== null);
+  const profitable = rows.filter(r => r.profit > 0);
+  document.getElementById('m-count').textContent = profitable.length;
+  if (!profitable.length) {
+    document.getElementById('m-best').textContent      = '—';
+    document.getElementById('m-best-name').textContent = 'aucun item rentable';
+    document.getElementById('m-avg').textContent       = '—';
+    return;
+  }
+  profitable.sort((a,b) => b.profit - a.profit);
+  const best = profitable[0];
+  document.getElementById('m-best').textContent      = (fmt(best.profit)||'—') + ' s';
+  document.getElementById('m-best-name').textContent = best.name + ' ' + best.tier + best.encDot;
+  const avg = Math.round(profitable.reduce((s,r) => s + r.profit, 0) / profitable.length);
+  document.getElementById('m-avg').textContent = (fmt(avg)||'—') + ' s';
+}
+
+// ── MISC ─────────────────────────────────────────────────────────
+function setEnc(val, btn) {
+  encFilter = val;
+  document.querySelectorAll('.etab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render(); updateMetrics();
+}
+
+document.getElementById('f-type').addEventListener('change', () => { render(); updateMetrics(); });
+document.getElementById('f-tier').addEventListener('change', () => { render(); updateMetrics(); });
+
+updateParams();
+loadAll();
+</script>
+</body>
+</html>
